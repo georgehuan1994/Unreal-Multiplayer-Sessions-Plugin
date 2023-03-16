@@ -18,7 +18,8 @@
 
 AMultiplayerSystemCharacter::AMultiplayerSystemCharacter() :
 CreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnCreateSessionComplete)),
-FindSessionsCompleteDelegate(FOnFindSessionsCompleteDelegate::CreateUObject(this, &ThisClass::OnFindSessionComplete))
+FindSessionsCompleteDelegate(FOnFindSessionsCompleteDelegate::CreateUObject(this, &ThisClass::OnFindSessionComplete)),
+JoinSessionCompleteDelegate(FOnJoinSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnJoinSessionComplete))
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -94,6 +95,7 @@ void AMultiplayerSystemCharacter::CreateGameSession()
 	SessionSettings->bShouldAdvertise = true;
 	SessionSettings->bUsesPresence = true;
 	SessionSettings->bUseLobbiesIfAvailable = true;
+	SessionSettings->Set(FName("MatchType"), FString("FreeForAll"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	OnlineSessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *SessionSettings);
@@ -137,6 +139,12 @@ void AMultiplayerSystemCharacter::OnCreateSessionComplete(FName SessionName, boo
 			15.f, FColor::Green,
 			FString::Printf(TEXT("Create session: %s"), *SessionName.ToString()));
 		}
+
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			World->ServerTravel(FString("/Game/ThirdPerson/Maps/Lobby?listen"));
+		}
 	}
 	else
 	{
@@ -156,10 +164,18 @@ void AMultiplayerSystemCharacter::OnCreateSessionComplete(FName SessionName, boo
  */
 void AMultiplayerSystemCharacter::OnFindSessionComplete(bool bWasSuccessful)
 {
+	if (!OnlineSessionInterface.IsValid())
+	{
+		return;
+	}
+	
 	for (auto Result : SessionSearch->SearchResults)
 	{
 		FString Id = Result.GetSessionIdStr();
 		FString User = Result.Session.OwningUserName;
+		FString MatchType;
+		
+		Result.Session.SessionSettings.Get(FName("MatchType"), MatchType);
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(
@@ -167,6 +183,46 @@ void AMultiplayerSystemCharacter::OnFindSessionComplete(bool bWasSuccessful)
 				15.f, FColor::Cyan,
 				FString::Printf(TEXT("Id: %s, User: %s"), *Id, *User));
 		}
+		if (MatchType == FString("FreeForAll"))
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.f, FColor::Cyan,
+				FString::Printf(TEXT("Joining Match Type: %s"), *MatchType));
+
+			OnlineSessionInterface->AddOnJoinSessionCompleteDelegate_Handle(JoinSessionCompleteDelegate);
+
+			const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+			OnlineSessionInterface->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, Result);
+		}
+	}
+}
+
+/**
+ * @brief 会话加入完成回调
+ * @param SessionName 会话名称
+ * @param Result 结果
+ */
+void AMultiplayerSystemCharacter::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+	if (!OnlineSessionInterface.IsValid())
+	{
+		return;
+	}
+
+	FString Address;
+	if (OnlineSessionInterface->GetResolvedConnectString(SessionName, Address))
+	{
+		GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.f, FColor::Yellow,
+				FString::Printf(TEXT("Connect string: %s"), *Address));
+	}
+
+	APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
+	if (PlayerController)
+	{
+		PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
 	}
 }
 

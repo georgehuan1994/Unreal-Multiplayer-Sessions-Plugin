@@ -84,6 +84,9 @@ protected:
 
 	/** 查找会话完成回调 **/
 	void OnFindSessionComplete(bool bWasSuccessful);
+
+	/** 会话加入完成回调 **/
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 	
 private:
 	// 会话创建完成委托
@@ -92,5 +95,7 @@ private:
 	FOnFindSessionsCompleteDelegate FindSessionsCompleteDelegate;
 	// 会话搜索结果和参数
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+	// 会话加入完成委托
+	FOnJoinSessionCompleteDelegate JoinSessionCompleteDelegate;
 };
 
