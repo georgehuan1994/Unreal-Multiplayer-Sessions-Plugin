@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "OnlineSessionSettings.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
 
@@ -19,9 +20,43 @@ class MULTIPLAYERSESSIONS_API UMultiplayerSessionsSubsystem : public UGameInstan
 public:
 	UMultiplayerSessionsSubsystem();
 	
+	/** 创建会话 **/
+	void CreateSession(int32 NumPublicConnections, FString MatchType);
+	
+	/** 寻找会话 **/
+	void FindSession(int32 MaxSearchResults);
+
+	/** 加入会话 **/
+	void JoinSession(const FOnlineSessionSearchResult& SessionResult);
+
+	/** 删除会话 **/
+	void DestroySession();
+
+	/** 开始会话 **/
+	void StartSession();
+	
 protected:
+	// Online Session Interface 委托回调函数
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+	void OnFindSessionComplete(bool bWasSuccessful);
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+	void OnStartSessionComplete(FName SessionName, bool bWasSuccessful);
 
 private:
-	// OnlineSession 接口指针
+	// Online Session Interface 指针
 	IOnlineSessionPtr SessionInterface;
+
+	// Online Session Interface 委托
+	FOnCreateSessionCompleteDelegate	CreateSessionCompleteDelegate;
+	FOnFindSessionsCompleteDelegate		FindSessionsCompleteDelegate;
+	FOnJoinSessionCompleteDelegate		JoinSessionCompleteDelegate;
+	FOnDestroySessionCompleteDelegate	DestroySessionCompleteDelegate;
+	FOnStartSessionCompleteDelegate		StartSessionCompleteDelegate;
+
+	FDelegateHandle CreateSessionCompleteDelegateHandle;
+	FDelegateHandle FindSessionCompleteDelegateHandle;
+	FDelegateHandle JoinSessionCompleteDelegateHandle;
+	FDelegateHandle DestroySessionCompleteDelegateHandle;
+	FDelegateHandle StartSessionCompleteDelegateHandle;
 };
