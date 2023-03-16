@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
-#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineSessionDelegates.h"
+#include "Interfaces/OnlineSessionInterface.h"
+
 #include "MultiplayerSystemCharacter.generated.h"
 
 
@@ -66,7 +68,18 @@ public:
 
 public:
 	// OnlineSession 接口指针
-	// IOnlineSessionPtr OnlineSessionInterface;
-	TSharedPtr<class IOnlineSession, ESPMode::ThreadSafe> OnlineSessionInterface;
+	IOnlineSessionPtr OnlineSessionInterface;
+
+protected:
+	/** 创建会话 **/
+	UFUNCTION(BlueprintCallable)
+	void CreateGameSession();
+
+	/** 创建会话完成回调 **/
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+	
+private:
+	// 会话创建完成委托
+	FOnCreateSessionCompleteDelegate CreateSessionCompleteDelegate;
 };
 

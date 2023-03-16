@@ -10,13 +10,14 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "OnlineSubsystem.h"
-#include "Interfaces/OnlineSessionInterface.h"
+#include "OnlineSessionSettings.h"
 
 
 //////////////////////////////////////////////////////////////////////////
 // AMultiplayerSystemCharacter
 
-AMultiplayerSystemCharacter::AMultiplayerSystemCharacter()
+AMultiplayerSystemCharacter::AMultiplayerSystemCharacter() :
+CreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnCreateSessionComplete))
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -58,8 +59,70 @@ AMultiplayerSystemCharacter::AMultiplayerSystemCharacter()
 		OnlineSessionInterface = OnlineSubsystem->GetSessionInterface();
 		if (GEngine)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 15.f,FColor::Blue,
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.f, FColor::Green,
 				FString::Printf(TEXT("Found subsystem %s"), *OnlineSubsystem->GetSubsystemName().ToString()));
+		}
+	}
+}
+
+/**
+ * @brief 创建会话
+ */
+void AMultiplayerSystemCharacter::CreateGameSession()
+{
+	// 字母键盘 1
+	if (!OnlineSessionInterface.IsValid())
+	{
+		return;
+	}
+
+	auto ExistingSession = OnlineSessionInterface->GetNamedSession(NAME_GameSession);
+	if (ExistingSession != nullptr)
+	{
+		OnlineSessionInterface->DestroySession(NAME_GameSession);
+	}
+
+	OnlineSessionInterface->AddOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegate);
+
+	TSharedPtr<FOnlineSessionSettings> SessionSettings = MakeShareable(new FOnlineSessionSettings());
+	SessionSettings->bIsLANMatch = false;
+	SessionSettings->NumPublicConnections = 4;
+	SessionSettings->bAllowJoinInProgress = true;
+	SessionSettings->bAllowJoinViaPresence = true;
+	SessionSettings->bShouldAdvertise = true;
+	SessionSettings->bUsesPresence = true;
+	
+	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	OnlineSessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *SessionSettings);
+}
+
+/**
+ * @brief 创建会话完成回调
+ * @param SessionName 会话名称
+ * @param bWasSuccessful 是否成功
+ */
+void AMultiplayerSystemCharacter::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	if (bWasSuccessful)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+			-1,
+			15.f, FColor::Green,
+			FString::Printf(TEXT("Create session: %s"), *SessionName.ToString()));
+		}
+	}
+	else
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+			-1,
+			15.f, FColor::Red,
+			FString(TEXT("Failed to create session!")));
 		}
 	}
 }
