@@ -144,6 +144,11 @@ void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 		{
 			FString Address;
 			SessionInterface->GetResolvedConnectString(NAME_GameSession,Address);
+
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.f, FColor::Yellow,
+				FString::Printf(TEXT("Connect string: %s"), *Address));
 			
 			APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
 			if (PlayerController)
