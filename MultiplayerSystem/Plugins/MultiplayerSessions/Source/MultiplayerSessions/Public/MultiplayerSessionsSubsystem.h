@@ -4,10 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "OnlineSessionSettings.h"
+#include "Delegates/DelegateCombinations.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
 
 #include "MultiplayerSessionsSubsystem.generated.h"
+
+/** UMenu 回调函数 **/
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerOnCreateSessionComplete, bool, bWasSuccessful);
 
 /**
  * 
@@ -34,6 +38,9 @@ public:
 
 	/** 开始会话 **/
 	void StartSession();
+
+	/** 创建会话完成 UMenu 委托 **/
+	FMultiplayerOnCreateSessionComplete MultiplayerOnCreateSessionComplete;
 	
 protected:
 	// Online Session Interface 委托回调函数
