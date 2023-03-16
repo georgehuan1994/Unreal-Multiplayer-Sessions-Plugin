@@ -46,6 +46,7 @@ protected:
 private:
 	// Online Session Interface 指针
 	IOnlineSessionPtr SessionInterface;
+	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
 
 	// Online Session Interface 委托
 	FOnCreateSessionCompleteDelegate	CreateSessionCompleteDelegate;
