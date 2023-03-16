@@ -62,10 +62,11 @@ private:
 	// Online Session Interface 指针
 	IOnlineSessionPtr SessionInterface;
 	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
+	TSharedPtr<FOnlineSessionSearch> LastSessionSearch;
 
 	// Online Session Interface 委托
 	FOnCreateSessionCompleteDelegate	CreateSessionCompleteDelegate;
-	FOnFindSessionsCompleteDelegate		FindSessionsCompleteDelegate;
+	FOnFindSessionsCompleteDelegate		FindSessionCompleteDelegate;
 	FOnJoinSessionCompleteDelegate		JoinSessionCompleteDelegate;
 	FOnDestroySessionCompleteDelegate	DestroySessionCompleteDelegate;
 	FOnStartSessionCompleteDelegate		StartSessionCompleteDelegate;

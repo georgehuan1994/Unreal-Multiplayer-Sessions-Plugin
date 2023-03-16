@@ -3,6 +3,7 @@
 
 #include "Menu.h"
 #include "MultiplayerSessionsSubsystem.h"
+#include "OnlineSubsystem.h"
 #include "Components/Button.h"
 
 void UMenu::MenuSetup(int32 NumOfPublicConnections, FString TypeOfMatch)
@@ -105,12 +106,52 @@ void UMenu::OnCreateSession(bool bWasSuccessful)
 	}
 }
 
+/**
+ * @brief 会话查找完成回调
+ * @param SessionResults 结果
+ * @param bWasSuccessful 是否查找成功
+ */
 void UMenu::OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful)
 {
+	if (MultiplayerSessionsSubsystem == nullptr)
+	{
+		return;
+	}
+	
+	for (auto Result : SessionResults)
+	{
+		FString SettingsValue;
+		Result.Session.SessionSettings.Get(FName("MatchType"), SettingsValue);
+		if (SettingsValue == MatchType)
+		{
+			MultiplayerSessionsSubsystem->JoinSession(Result);
+			return;
+		}
+	}
 }
 
+/**
+ * @brief 加入会话完成回调
+ * @param Result 结果
+ */
 void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 {
+	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+	if (Subsystem)
+	{
+		IOnlineSessionPtr SessionInterface = Subsystem->GetSessionInterface();
+		if (SessionInterface.IsValid())
+		{
+			FString Address;
+			SessionInterface->GetResolvedConnectString(NAME_GameSession,Address);
+			
+			APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
+			if (PlayerController)
+			{
+				PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
+			}
+		}
+	}
 }
 
 void UMenu::OnDestroySession(bool bWasSuccessful)
@@ -121,6 +162,9 @@ void UMenu::OnStartSession(bool bWasSuccessful)
 {
 }
 
+/**
+ * @brief 点击 Host 按钮
+ */
 void UMenu::HostButtonClicked()
 {
 	if (MultiplayerSessionsSubsystem)
@@ -129,14 +173,14 @@ void UMenu::HostButtonClicked()
 	}
 }
 
+/**
+ * @brief 点击 Join 按钮
+ */
 void UMenu::JoinButtonClicked()
 {
-	if (GEngine)
+	if (MultiplayerSessionsSubsystem)
 	{
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			15.f, FColor::Yellow,
-			FString(TEXT("Join Button Clicked")));
+		MultiplayerSessionsSubsystem->FindSession(10000);
 	}
 }
 
