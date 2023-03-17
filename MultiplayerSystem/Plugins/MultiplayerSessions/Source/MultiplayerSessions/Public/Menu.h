@@ -16,7 +16,7 @@ class MULTIPLAYERSESSIONS_API UMenu : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "MultiplayerSessions")
 	void MenuSetup(int32 NumOfPublicConnections = 4, FString TypeOfMatch = FString(TEXT("FreeForAll")), FString LobbyPath = FString(TEXT("/Game/ThirdPerson/Maps/Lobby")));
 
 protected:
@@ -24,26 +24,26 @@ protected:
 	virtual void NativeDestruct() override;
 
 	// Callbacks for the custom delegates on the MultiplayerSessionSubsystem
-	UFUNCTION()
+	UFUNCTION(Category = "MultiplayerSessions")
 	void OnCreateSession(bool bWasSuccessful);
 	void OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful);
 	void OnJoinSession(EOnJoinSessionCompleteResult::Type Result);
-	UFUNCTION()
+	UFUNCTION(Category = "MultiplayerSessions")
 	void OnDestroySession(bool bWasSuccessful);
-	UFUNCTION()
+	UFUNCTION(Category = "MultiplayerSessions")
 	void OnStartSession(bool bWasSuccessful);
 
 private:
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(EditAnywhere, Category = "MultiplayerSessions", META = (BindWidget))
 	class UButton* HostButton;
 	
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(EditAnywhere, Category = "MultiplayerSessions", META = (BindWidget))
 	UButton* JoinButton;
 
-	UFUNCTION()
+	UFUNCTION(Category = "MultiplayerSessions")
 	void HostButtonClicked();
 	
-	UFUNCTION()
+	UFUNCTION(Category = "MultiplayerSessions")
 	void JoinButtonClicked();
 
 	void MenuTearDown();
